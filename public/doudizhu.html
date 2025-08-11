@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>斗地主联机对战</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .header {
+            color: white;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .game-board {
+            width: 100%;
+            height: 400px;
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            border-radius: 15px;
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .player-area {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .player-left {
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .player-right {
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .player-bottom {
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .player-info {
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            margin-bottom: 10px;
+        }
+
+        .hand-cards {
+            width: 100%;
+            min-height: 120px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .cards-row {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .card-item {
+            width: 50px;
+            height: 70px;
+            background: #fff;
+            border: 2px solid #8B4513;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .card-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-item.selected {
+            transform: translateY(-10px);
+            border-color: #e74c3c;
+        }
+
+        .card-item.red {
+            color: #e74c3c;
+        }
+
+        .card-item.black {
+            color: #2c3e50;
+        }
+
+        .game-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .sidebar {
+            width: 300px;
+            float: right;
+            margin-left: 20px;
+        }
+
+        .card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .status.waiting {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status.calling {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status.playing {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.finished {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .chat-container {
+            height: 200px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            overflow-y: auto;
+            background: white;
+            margin-bottom: 10px;
+            height: 150px;
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 5px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .call-area {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .call-score {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            color: white;
+        }
+
+        .call-score:hover {
+            transform: scale(1.1);
+        }
+
+        .call-score.unavailable {
+            background: #bdc3c7;
+            color: #7f8c8d;
+            cursor: not-allowed;
+        }
+
+        .play-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .play-btn {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+
+        .pass-btn {
+            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>🃏 斗地主联机对战</h1>
+        <p>支持局域网三人对战</p>
+        <button onclick="goHome()"
+            style="background: rgba(255,255,255,0.2); border: 2px solid white; color: white; padding: 8px 16px; border-radius: 5px; cursor: pointer; font-size: 14px;">←
+            返回首页</button>
+    </div>
+
+    <div class="game-container">
+        <div class="game-board">
+            <div class="player-area player-left" id="playerLeft">
+                <div class="player-info">
+                    <span>玩家2</span>
+                    <span class="card-count">17</span>
+                </div>
+            </div>
+            <div class="player-area player-right" id="playerRight">
+                <div class="player-info">
+                    <span>玩家3</span>
+                    <span class="card-count">17</span>
+                </div>
+            </div>
+            <div class="player-area player-bottom" id="playerBottom">
+                <div class="player-info">
+                    <span>玩家1</span>
+                    <span class="card-count">17</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="hand-cards" id="handCards">
+            <div class="cards-row" id="cardsRow1"></div>
+            <div class="cards-row" id="cardsRow2"></div>
+            <div class="cards-row" id="cardsRow3"></div>
+        </div>
+
+        <div class="game-controls">
+            <button id="createRoomBtn">创建房间</button>
+            <button id="joinRoomBtn">加入房间</button>
+            <button id="restartBtn" disabled>重新开始</button>
+        </div>
+
+        <div class="call-area" id="callArea" style="display: none;">
+            <div class="call-score" data-score="1">1</div>
+            <div class="call-score" data-score="2">2</div>
+            <div class="call-score" data-score="3">3</div>
+            <div class="call-score" data-score="0">不叫</div>
+        </div>
+
+        <div class="play-controls" id="playControls" style="display: none;">
+            <button id="playBtn" class="play-btn">出牌</button>
+            <button id="passBtn" class="pass-btn">过牌</button>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <div class="card">
+            <h3>房间管理</h3>
+            <input type="text" id="roomIdInput" placeholder="输入房间号" maxlength="6"
+                style="width: 100%; padding: 8px; margin-bottom: 10px;">
+            <button id="copyRoomBtn" disabled style="width: 100%;">复制房间号</button>
+        </div>
+
+        <div class="card">
+            <h3>游戏状态</h3>
+            <div id="gameStatus" class="status waiting">等待开始游戏...</div>
+            <div id="roomInfo" style="display: none;">
+                <strong>房间号：</strong><span id="currentRoomId">-</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>玩家信息</h3>
+            <div id="player1Info" class="player-info"
+                style="display: none; background: #e74c3c; color: white; padding: 8px; border-radius: 5px; margin-bottom: 5px;">
+                <span>玩家1</span>
+                <span>🃏</span>
+            </div>
+            <div id="player2Info" class="player-info"
+                style="display: none; background: #3498db; color: white; padding: 8px; border-radius: 5px; margin-bottom: 5px;">
+                <span>玩家2</span>
+                <span>🃏</span>
+            </div>
+            <div id="player3Info" class="player-info"
+                style="display: none; background: #f39c12; color: white; padding: 8px; border-radius: 5px; margin-bottom: 5px;">
+                <span>玩家3</span>
+                <span>🃏</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>聊天室</h3>
+            <div class="chat-container">
+                <div id="chatMessages" class="chat-messages"></div>
+                <div class="chat-input">
+                    <input type="text" id="chatInput" placeholder="输入消息..." maxlength="100">
+                    <button id="sendChatBtn">发送</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="doudizhu-client.js"></script>
+    <script>
+        function goHome() {
+            if (confirm('确定要返回首页吗？当前游戏进度将丢失。')) {
+                window.location.href = '/';
+            }
+        }
+    </script>
+</body>
+
+</html>

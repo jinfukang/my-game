@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>五子棋联机对战</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            overflow-x: hidden;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        /* 移动端视口设置 */
+        @media (max-width: 768px) {
+            body {
+                padding: 5px;
+            }
+        }
+
+        .header {
+            color: white;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            display: flex;
+            gap: 20px;
+            max-width: 1200px;
+            width: 100%;
+            min-height: 0;
+        }
+
+        @media (max-width: 768px) {
+            .game-container {
+                flex-direction: column;
+                padding: 10px;
+                gap: 15px;
+                border-radius: 10px;
+            }
+        }
+
+        .board-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 0;
+        }
+
+        #gameCanvas {
+            border: 3px solid #8B4513;
+            border-radius: 8px;
+            background: #DEB887;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 100%;
+            height: auto;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        @media (max-width: 768px) {
+            #gameCanvas {
+                width: 100%;
+                max-width: 400px;
+                height: auto;
+                border: 2px solid #8B4513;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #gameCanvas {
+                max-width: 350px;
+            }
+        }
+
+        .sidebar {
+            width: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            min-width: 0;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                gap: 10px;
+            }
+        }
+
+        .card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        @media (max-width: 768px) {
+            .card {
+                padding: 12px;
+                border-radius: 8px;
+            }
+
+            .card h3 {
+                font-size: 1.1em;
+                margin-bottom: 8px;
+            }
+        }
+
+        .room-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            min-height: 40px;
+            white-space: nowrap;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        @media (max-width: 768px) {
+            button {
+                padding: 12px 16px;
+                font-size: 16px;
+                min-height: 44px;
+                border-radius: 8px;
+            }
+        }
+
+        input {
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            min-height: 40px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            input {
+                padding: 12px 14px;
+                font-size: 16px;
+                min-height: 44px;
+                border-radius: 8px;
+            }
+        }
+
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .status.waiting {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .status.playing {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .status.finished {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .player-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+        }
+
+        .player-black {
+            background: #333;
+            color: white;
+        }
+
+        .player-white {
+            background: #f0f0f0;
+            color: #333;
+            border: 2px solid #ddd;
+        }
+
+        .current-turn {
+            border: 3px solid #4CAF50;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+        }
+
+        .chat-container {
+            height: 200px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-messages {
+            flex: 1;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            overflow-y: auto;
+            background: white;
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .chat-container {
+                height: 150px;
+            }
+
+            .chat-messages {
+                padding: 8px;
+                font-size: 14px;
+            }
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 5px;
+        }
+
+        .chat-input input {
+            flex: 1;
+        }
+
+        .message {
+            margin-bottom: 5px;
+            padding: 3px 6px;
+            border-radius: 3px;
+            background: #f8f9fa;
+        }
+
+        .system-message {
+            background: #e3f2fd;
+            color: #1976d2;
+            font-style: italic;
+        }
+
+        .game-modes {
+            display: flex;
+            gap: 10px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            background: #f8f9fa;
+            color: #333;
+            border: 2px solid #ddd;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            min-height: 40px;
+        }
+
+        .mode-btn:hover {
+            background: #e9ecef;
+            transform: translateY(-1px);
+        }
+
+        .mode-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .mode-btn {
+                padding: 12px 16px;
+                font-size: 16px;
+                min-height: 44px;
+                border-radius: 8px;
+            }
+        }
+
+        /* 游戏控制按钮 */
+        .game-controls {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* 头部标题优化 */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .game-controls {
+                margin-top: 15px;
+                gap: 8px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .game-controls {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 20px; flex-wrap: wrap;">
+            <button onclick="goHome()"
+                style="background: rgba(255,255,255,0.2); border: 2px solid white; color: white; padding: 8px 16px; border-radius: 5px; cursor: pointer; font-size: 14px;">
+                ← 返回首页
+            </button>
+            <div style="text-align: center;">
+                <h1>🀫 五子棋联机对战</h1>
+                <p>支持局域网双人对战</p>
+            </div>
+            <div style="width: 80px;"></div> <!-- 占位保持居中 -->
+        </div>
+    </div>
+
+    <div class="game-container">
+        <div class="board-container">
+            <canvas id="gameCanvas"></canvas>
+            <div class="game-controls">
+                <button id="restartBtn" disabled>重新开始</button>
+                <button id="resignBtn" disabled>认输</button>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <!-- 房间控制 -->
+            <div class="card">
+                <h3>游戏模式</h3>
+                <div class="game-modes" style="margin-bottom: 15px;">
+                    <button id="createPvPBtn" class="mode-btn">双人对战</button>
+                    <button id="createAIBtn" class="mode-btn">人机对战</button>
+                </div>
+
+                <div id="aiDifficultySelect" style="display: none; margin-bottom: 15px;">
+                    <label for="difficultySelect">AI难度：</label>
+                    <select id="difficultySelect" style="padding: 5px; border-radius: 3px;">
+                        <option value="easy">简单</option>
+                        <option value="medium" selected>中等</option>
+                        <option value="hard">困难</option>
+                    </select>
+                </div>
+
+                <div class="room-controls">
+                    <button id="createRoomBtn" style="display: none;">创建房间</button>
+                    <button id="joinRoomBtn">加入房间</button>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="roomIdInput" placeholder="输入房间号" maxlength="6">
+                    <button id="copyRoomBtn" disabled>复制房间号</button>
+                </div>
+            </div>
+
+            <!-- 游戏状态 -->
+            <div class="card">
+                <h3>游戏状态</h3>
+                <div id="gameStatus" class="status waiting">等待开始游戏...</div>
+                <div id="roomInfo" style="display: none;">
+                    <strong>房间号：</strong><span id="currentRoomId">-</span>
+                </div>
+            </div>
+
+            <!-- 玩家信息 -->
+            <div class="card">
+                <h3>玩家信息</h3>
+                <div id="player1Info" class="player-info player-black" style="display: none;">
+                    <span>黑子玩家</span>
+                    <span>⚫</span>
+                </div>
+                <div id="player2Info" class="player-info player-white" style="display: none;">
+                    <span>白子玩家</span>
+                    <span>⚪</span>
+                </div>
+                <div id="spectatorInfo"
+                    style="display: none; text-align: center; padding: 10px; background: #e9ecef; border-radius: 5px;">
+                    观众模式
+                </div>
+            </div>
+
+            <!-- 聊天 -->
+            <div class="card">
+                <h3>聊天室</h3>
+                <div class="chat-container">
+                    <div id="chatMessages" class="chat-messages"></div>
+                    <div class="chat-input">
+                        <input type="text" id="chatInput" placeholder="输入消息..." maxlength="100">
+                        <button id="sendChatBtn">发送</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="client.js"></script>
+    <script>
+        // 返回首页
+        function goHome() {
+            if (confirm('确定要返回首页吗？当前游戏进度将丢失。')) {
+                window.location.href = '/';
+            }
+        }
+    </script>
+</body>
+
+</html>

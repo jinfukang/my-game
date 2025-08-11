@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>在线游戏平台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+            color: #333;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .stats-bar {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 15px 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            gap: 30px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: bold;
+        }
+
+        .stat-icon {
+            font-size: 1.5em;
+        }
+
+        .games-container {
+            max-width: 1200px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .game-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .game-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .game-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+            text-align: center;
+        }
+
+        .game-description {
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.5;
+            text-align: center;
+        }
+
+        .game-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+            color: #888;
+        }
+
+        .game-modes {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .mode-tag {
+            background: #f0f0f0;
+            color: #666;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+        }
+
+        .play-button {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .play-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .footer {
+            margin-top: auto;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9em;
+        }
+
+        /* 移动端优化 */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 2.5em;
+            }
+
+            .stats-bar {
+                padding: 12px 20px;
+                gap: 20px;
+            }
+
+            .games-container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .game-card {
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .stats-bar {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+
+        /* 加载动画 */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .online-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #4CAF50;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>🎮 在线游戏平台</h1>
+        <p>选择你喜欢的游戏，开始精彩对战！</p>
+    </div>
+
+    <div class="stats-bar">
+        <div class="stat-item">
+            <span class="stat-icon">👥</span>
+            <span>在线人数: <span id="onlineCount" class="loading"></span></span>
+            <span class="online-indicator"></span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-icon">🎯</span>
+            <span>游戏总数: <span id="gameCount">2</span></span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-icon">🏆</span>
+            <span>活跃房间: <span id="activeRooms" class="loading"></span></span>
+        </div>
+    </div>
+
+    <div class="games-container">
+        <!-- 五子棋游戏卡片 -->
+        <div class="game-card" onclick="enterGame('wuziqi')">
+            <div class="game-icon">⚫⚪</div>
+            <div class="game-title">五子棋对战</div>
+            <div class="game-description">
+                经典的五子棋游戏，支持双人对战和人机对战。
+                快来挑战你的策略思维！
+            </div>
+            <div class="game-stats">
+                <span>📊 难度: ⭐⭐⭐</span>
+                <span>⏱️ 时长: 5-15分钟</span>
+            </div>
+            <div class="game-modes">
+                <span class="mode-tag">双人对战</span>
+                <span class="mode-tag">人机对战</span>
+                <span class="mode-tag">观战模式</span>
+                <span class="mode-tag">局域网联机</span>
+            </div>
+            <button class="play-button">开始游戏</button>
+        </div>
+
+        <!-- 斗地主游戏卡片 -->
+        <div class="game-card" onclick="enterGame('doudizhu')">
+            <div class="game-icon">🃏</div>
+            <div class="game-title">斗地主对战</div>
+            <div class="game-description">
+                经典的斗地主游戏，支持三人联机对战。
+                叫地主、出牌、过牌，体验紧张刺激的卡牌对战！
+            </div>
+            <div class="game-stats">
+                <span>📊 难度: ⭐⭐⭐⭐</span>
+                <span>⏱️ 时长: 10-30分钟</span>
+            </div>
+            <div class="game-modes">
+                <span class="mode-tag">三人联机</span>
+                <span class="mode-tag">叫地主</span>
+                <span class="mode-tag">智能出牌</span>
+                <span class="mode-tag">局域网联机</span>
+            </div>
+            <button class="play-button">开始游戏</button>
+        </div>
+
+        <!-- 预留其他游戏卡片 -->
+        <div class="game-card" style="opacity: 0.6; cursor: not-allowed;" onclick="comingSoon()">
+            <div class="game-icon">🃏</div>
+            <div class="game-title">德州扑克</div>
+            <div class="game-description">
+                经典的德州扑克游戏，考验你的心理战术。
+                即将上线，敬请期待！
+            </div>
+            <div class="game-stats">
+                <span>📊 难度: ⭐⭐⭐⭐</span>
+                <span>⏱️ 时长: 15-30分钟</span>
+            </div>
+            <div class="game-modes">
+                <span class="mode-tag">敬请期待</span>
+            </div>
+            <button class="play-button" disabled>即将上线</button>
+        </div>
+
+        <div class="game-card" style="opacity: 0.6; cursor: not-allowed;" onclick="comingSoon()">
+            <div class="game-icon">🎯</div>
+            <div class="game-title">飞镖游戏</div>
+            <div class="game-description">
+                精准的飞镖投掷游戏，测试你的准确度。
+                支持多种游戏模式。
+            </div>
+            <div class="game-stats">
+                <span>📊 难度: ⭐⭐</span>
+                <span>⏱️ 时长: 3-10分钟</span>
+            </div>
+            <div class="game-modes">
+                <span class="mode-tag">敬请期待</span>
+            </div>
+            <button class="play-button" disabled>即将上线</button>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>© 2024 在线游戏平台 - 享受游戏，享受生活</p>
+        <p>支持多设备访问，随时随地开始游戏</p>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // 游戏平台客户端
+        class GamePlatform {
+            constructor() {
+                this.socket = io();
+                this.initSocketEvents();
+                this.updateGameCount();
+            }
+
+            initSocketEvents() {
+                // 接收服务器统计信息
+                this.socket.on('platformStats', (stats) => {
+                    document.getElementById('onlineCount').textContent = stats.onlineUsers;
+                    document.getElementById('activeRooms').textContent = stats.activeRooms;
+
+                    // 移除加载动画
+                    document.getElementById('onlineCount').classList.remove('loading');
+                    document.getElementById('activeRooms').classList.remove('loading');
+                });
+
+                // 连接时请求统计信息
+                this.socket.on('connect', () => {
+                    this.socket.emit('requestStats');
+                });
+            }
+
+            updateGameCount() {
+                // 计算可用游戏数量
+                const gameCards = document.querySelectorAll('.game-card');
+                const availableGames = Array.from(gameCards).filter(card =>
+                    !card.style.opacity || card.style.opacity === '1'
+                ).length;
+                document.getElementById('gameCount').textContent = availableGames;
+            }
+        }
+
+        // 进入游戏
+        function enterGame(gameType) {
+            if (gameType === 'wuziqi') {
+                window.location.href = '/wuziqi';
+            } else if (gameType === 'doudizhu') {
+                window.location.href = '/doudizhu';
+            }
+        }
+
+        // 即将上线提示
+        function comingSoon() {
+            alert('该游戏即将上线，敬请期待！🎮');
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            new GamePlatform();
+        });
+    </script>
+</body>
+
+</html>
